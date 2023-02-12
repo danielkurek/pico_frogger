@@ -1,0 +1,3 @@
+[submodule "pico_ssd1306"]
+	path = pico_ssd1306
+	url = git@github.com:danielkurek/pico_ssd1306.git
