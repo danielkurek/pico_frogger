@@ -4,14 +4,14 @@
 // #include "hardware/gpio.h"
 // #include "hardware/divider.h"
 // #include "hardware/spi.h"
-#include "hardware/i2c.h"
+#include "hardware/spi.h"
 // #include "hardware/pio.h"
 // #include "hardware/interp.h"
 // #include "hardware/timer.h"
 // #include "hardware/watchdog.h"
 // #include "hardware/clocks.h"
 
-#include "ssd1306.h"
+#include "ssd1306-spi.h"
 
 #define SLEEPTIME 25
 
@@ -52,20 +52,41 @@
 //     return 0;
 // }
 
+#define SSD1306_SPI_RES 7
+#define SSD1306_SPI_DC 8
+#define SSD1306_SPI_CSN 9
+#define SSD1306_SPI_SCK 10
+#define SSD1306_SPI_TX 11
+
 void setup_gpios(void) {
-    i2c_init(i2c0, 400000);
-    gpio_set_function(4, GPIO_FUNC_I2C);
-    gpio_set_function(5, GPIO_FUNC_I2C);
-    gpio_pull_up(4);
-    gpio_pull_up(5);
+    spi_init(spi1, 10 * 1024 * 1024);
+    spi_set_format(spi1, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
+    gpio_set_function(SSD1306_SPI_SCK, GPIO_FUNC_SPI);
+    gpio_set_function(SSD1306_SPI_TX, GPIO_FUNC_SPI);
+    gpio_init(SSD1306_SPI_CSN);
+    gpio_put(SSD1306_SPI_CSN, 0);
+    gpio_set_dir(SSD1306_SPI_CSN, GPIO_OUT);
+    gpio_init(SSD1306_SPI_DC);
+    gpio_put(SSD1306_SPI_DC, 0);
+    gpio_set_dir(SSD1306_SPI_DC, GPIO_OUT);
+    gpio_init(SSD1306_SPI_RES);
+    gpio_put(SSD1306_SPI_RES, 0);
+    gpio_set_dir(SSD1306_SPI_RES, GPIO_OUT);
+
+    gpio_init(PICO_DEFAULT_LED_PIN);
+    gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
 }
 
 void animation(void) {
     ssd1306_t disp;
     disp.external_vcc=false;
-    ssd1306_init(&disp, 128, 64, 0x3C, i2c0);
+    if(!ssd1306_init(&disp, 128, 64, spi1, SSD1306_SPI_DC, SSD1306_SPI_CSN, SSD1306_SPI_RES)){
+        gpio_put(PICO_DEFAULT_LED_PIN, 0);
+        sleep_ms(50);
+        gpio_put(PICO_DEFAULT_LED_PIN, 1);
+        sleep_ms(50);
+    }
     ssd1306_clear(&disp);
-    printf("ANIMATION!\n");
     for(;;){
         for(int y=0; y<63; ++y) {
             ssd1306_draw_line(&disp, 0, y, 127, y);
@@ -148,7 +169,6 @@ int main()
 
 
 
-    // puts("Hello, world!");
 
     return 0;
 }

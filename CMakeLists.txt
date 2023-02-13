@@ -55,7 +55,7 @@ target_link_libraries(frogger
   hardware_timer
   hardware_watchdog
   hardware_clocks
-  pico_ssd1306
+  pico_ssd1306_spi
   )
   
 pico_add_extra_outputs(frogger)
