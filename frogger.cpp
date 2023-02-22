@@ -11,7 +11,8 @@
 // #include "hardware/watchdog.h"
 // #include "hardware/clocks.h"
 
-#include "ssd1306-spi.h"
+#include "pico_ssd1306/ssd1306-spi.h"
+#include "game_engine/engine.hpp"
 
 #define SLEEPTIME 25
 
@@ -86,13 +87,32 @@ void animation(void) {
         gpio_put(PICO_DEFAULT_LED_PIN, 1);
         sleep_ms(50);
     }
+    static uint8_t img [] = {
+        1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,0,0,0,0,0,0,0,0,0,0,0,1,
+        1,0,1,1,1,1,1,1,1,1,1,0,1,
+        1,0,1,0,0,0,0,0,0,0,1,0,1,
+        1,0,1,0,1,1,1,1,1,0,1,0,1,
+        1,0,1,0,1,1,1,1,1,0,1,0,1,
+        1,0,1,0,1,1,1,1,1,0,1,0,1,
+        1,0,1,0,1,1,1,1,1,0,1,0,1,
+        1,0,1,0,1,1,1,1,1,0,1,0,1,
+        1,0,1,0,0,0,0,0,0,0,1,0,1,
+        1,0,1,1,1,1,1,1,1,1,1,0,1,
+        1,0,0,0,0,0,0,0,0,0,0,0,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1
+    };
+    Image image = {img, 13, 13};
+
     ssd1306_clear(&disp);
     for(;;){
-        for(int y=0; y<63; ++y) {
-            ssd1306_draw_line(&disp, 0, y, 127, y);
-            ssd1306_show(&disp);
-            sleep_ms(SLEEPTIME);
-            ssd1306_clear(&disp);
+        for(int x=0; x<127-image.width; x+=3) {
+            for(int y=0; y<63-image.height; ++y) {
+                ssd1306_image_blit(&disp, image, x, y);
+                ssd1306_show(&disp);
+                sleep_ms(SLEEPTIME);
+                ssd1306_clear(&disp);
+            }
         }
     }
 }

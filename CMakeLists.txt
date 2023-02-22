@@ -47,6 +47,7 @@ target_include_directories(frogger PRIVATE
 
 # Add any user requested libraries
 add_subdirectory(pico_ssd1306)
+add_subdirectory(game_engine)
 target_link_libraries(frogger
   hardware_spi
   hardware_i2c
@@ -56,6 +57,7 @@ target_link_libraries(frogger
   hardware_watchdog
   hardware_clocks
   pico_ssd1306_spi
+  game_engine
   )
   
 pico_add_extra_outputs(frogger)
