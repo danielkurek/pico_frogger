@@ -13,6 +13,8 @@
 
 #include "pico_ssd1306/ssd1306-spi.h"
 #include "game_engine/engine.hpp"
+#include <memory>
+#include <inttypes.h>
 
 #define SLEEPTIME 25
 
@@ -87,34 +89,24 @@ void animation(void) {
         gpio_put(PICO_DEFAULT_LED_PIN, 1);
         sleep_ms(50);
     }
-    static uint8_t img [] = {
-        1,1,1,1,1,1,1,1,1,1,1,1,1,
-        1,0,0,0,0,0,0,0,0,0,0,0,1,
-        1,0,1,1,1,1,1,1,1,1,1,0,1,
-        1,0,1,0,0,0,0,0,0,0,1,0,1,
-        1,0,1,0,1,1,1,1,1,0,1,0,1,
-        1,0,1,0,1,1,1,1,1,0,1,0,1,
-        1,0,1,0,1,1,1,1,1,0,1,0,1,
-        1,0,1,0,1,1,1,1,1,0,1,0,1,
-        1,0,1,0,1,1,1,1,1,0,1,0,1,
-        1,0,1,0,0,0,0,0,0,0,1,0,1,
-        1,0,1,1,1,1,1,1,1,1,1,0,1,
-        1,0,0,0,0,0,0,0,0,0,0,0,1,
-        1,1,1,1,1,1,1,1,1,1,1,1,1
+    static uint8_t truck_img_data [] = {
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,1,1,1,0,1,0,1,0,1,0,1,0,1,
+        1,1,1,1,1,0,1,0,1,0,1,0,1,1,
+        1,1,1,1,0,1,0,1,0,1,0,1,0,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1
     };
-    Image image = {img, 13, 13};
+    Image truck_img = {14, 5, truck_img_data};
 
     ssd1306_clear(&disp);
-    for(;;){
-        for(int x=0; x<127-image.width; x+=3) {
-            for(int y=0; y<63-image.height; ++y) {
-                ssd1306_image_blit(&disp, image, x, y);
-                ssd1306_show(&disp);
-                sleep_ms(SLEEPTIME);
-                ssd1306_clear(&disp);
-            }
-        }
-    }
+    GameEngine engine{64,127};
+    sleep_ms(5000);
+    std::shared_ptr<PhysicsObject> truck = std::make_shared<PhysicsObject>(127,63-6-truck_img.height,truck_img,true);
+    truck->setMotionVector(-1,0);
+    truck->setStepTimeUs(75000);
+    engine.cars.push_back(truck);
+    engine.objects.push_back(truck);
+    engine.start_gameloop(&disp);
 }
 
 
