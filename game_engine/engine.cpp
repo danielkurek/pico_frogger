@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <inttypes.h>
 #include <type_traits>
+#include "button.hpp"
 
 void ssd1306_image_blit(ssd1306_t *p, const Image& image, int x_offset, int y_offset){
     for(int i = 0; i < image.width; ++i){
@@ -75,18 +76,6 @@ std::shared_ptr<T> PhysicsObject::collidesWithObjects(const std::vector<std::sha
         }
     }
     return nullptr;
-}
-
-bool Button::isPressed(absolute_time_t now){
-    auto diff = absolute_time_diff_us(_last_update, now);
-    if(diff > _debounce_time){
-        bool state = gpio_get(_pin);
-        if(_last_state == state)
-            return state;
-        _last_state = state;
-        _last_update = now;
-    }
-    return false;
 }
 
 uint8_t Frog::frog_img_data [] = {

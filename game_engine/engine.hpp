@@ -6,6 +6,7 @@
 #include <vector>
 #include <stdio.h>
 #include <memory>
+#include "button.hpp"
 
 struct Image{
     uint8_t width;
@@ -47,16 +48,6 @@ class PhysicsObject : public GameObject{
         absolute_time_t last_update;
 };
 
-class Button{
-    public:
-        Button(uint pin, uint debounce_time_us) : _pin(pin), _debounce_time(debounce_time_us), _last_state(false), _last_update(0) {}
-        bool isPressed(absolute_time_t pressed); // should be called as frequently as possible
-    private:
-    uint _pin;
-    uint _debounce_time;
-    bool _last_state;
-    absolute_time_t _last_update;
-};
 struct frog_options_t{
     uint btn_up_pin;
     uint btn_down_pin;
