@@ -97,9 +97,17 @@ void animation(void) {
         1,1,1,1,1,1,1,1,1,1,1,1,1,1
     };
     Image truck_img = {14, 5, truck_img_data};
-
     ssd1306_clear(&disp);
-    GameEngine engine{64,127};
+    frog_options_t frog_options = {
+        btn_up_pin: 0,
+        btn_down_pin: 1,
+        btn_left_pin: 2,
+        btn_right_pin: 3,
+        btn_act_pin: 5,
+        btn_bck_pin: 4,
+        debounce_time_us: 10000
+    };
+    GameEngine engine{64, 127, frog_options};
     sleep_ms(5000);
     std::shared_ptr<PhysicsObject> truck = std::make_shared<PhysicsObject>(127,63-6-truck_img.height,truck_img,true);
     truck->setMotionVector(-1,0);

@@ -47,17 +47,44 @@ class PhysicsObject : public GameObject{
         absolute_time_t last_update;
 };
 
+class Button{
+    public:
+        Button(uint pin, uint debounce_time_us) : _pin(pin), _debounce_time(debounce_time_us), _last_state(false), _last_update(0) {}
+        bool isPressed(absolute_time_t pressed); // should be called as frequently as possible
+    private:
+    uint _pin;
+    uint _debounce_time;
+    bool _last_state;
+    absolute_time_t _last_update;
+};
+struct frog_options_t{
+    uint btn_up_pin;
+    uint btn_down_pin;
+    uint btn_left_pin;
+    uint btn_right_pin;
+    uint btn_act_pin;
+    uint btn_bck_pin;
+    uint debounce_time_us;
+};
+
 class Frog : public PhysicsObject {
     public:
-        Frog();
+        Frog(frog_options_t config);
+        void updateTick(absolute_time_t now) override;
         static uint8_t frog_img_data [];
-
         static const Image frogImage;
+    private:
+        Button btn_up;
+        Button btn_down;
+        Button btn_left;
+        Button btn_right;
+        Button btn_act;
+        Button btn_bck;
 };
 
 class GameEngine{
     public:
-        GameEngine(int width, int height);
+        GameEngine(int width, int height, frog_options_t& frog_options);
         void start_gameloop(ssd1306_t *p);
 
         std::vector<std::shared_ptr<GameObject>> objects;
@@ -65,6 +92,7 @@ class GameEngine{
         std::vector<std::shared_ptr<PhysicsObject>> platforms;
         std::vector<std::shared_ptr<GameObject>> leaves;
     private:
+        bool checkCollisions();
         int _width;
         int _height;
         absolute_time_t _last_time;

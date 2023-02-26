@@ -77,6 +77,18 @@ std::shared_ptr<T> PhysicsObject::collidesWithObjects(const std::vector<std::sha
     return nullptr;
 }
 
+bool Button::isPressed(absolute_time_t now){
+    auto diff = absolute_time_diff_us(_last_update, now);
+    if(diff > _debounce_time){
+        bool state = gpio_get(_pin);
+        if(_last_state == state)
+            return state;
+        _last_state = state;
+        _last_update = now;
+    }
+    return false;
+}
+
 uint8_t Frog::frog_img_data [] = {
             0,1,1,1,0,
             1,0,1,0,1,
@@ -86,10 +98,33 @@ uint8_t Frog::frog_img_data [] = {
         };
 const Image Frog::frogImage = {5,5,Frog::frog_img_data};
 
-Frog::Frog() : PhysicsObject((127/2)-frogImage.width, 63-frogImage.height, frogImage, false) {}
+Frog::Frog(frog_options_t config) : 
+    PhysicsObject((127/2)-frogImage.width, 63-frogImage.height, frogImage, false),
+    btn_up(config.btn_up_pin, config.debounce_time_us),
+    btn_down(config.btn_down_pin, config.debounce_time_us),
+    btn_left(config.btn_left_pin, config.debounce_time_us),
+    btn_right(config.btn_right_pin, config.debounce_time_us),
+    btn_act(config.btn_act_pin, config.debounce_time_us),
+    btn_bck(config.btn_bck_pin, config.debounce_time_us)
+ {}
 
-GameEngine::GameEngine(int width, int height) : _width(width), _height(height), objects(), cars(), platforms() {
-    frog = std::make_shared<Frog>();
+void Frog::updateTick(absolute_time_t now){
+    if(btn_up.isPressed(now)){
+        if(y - _image.height >= 0) y -= _image.height;
+    }
+    if(btn_down.isPressed(now)){
+        if(y + _image.height <= 63 - _image.height) y += _image.height;
+    }
+    if(btn_left.isPressed(now)){
+        if(x - _image.width >= 0) x -= _image.width;
+    }
+    if(btn_right.isPressed(now)){
+        if(x + _image.width <= 127 - _image.width) x += _image.width;
+    }
+}
+
+GameEngine::GameEngine(int width, int height, frog_options_t& frog_options) : _width(width), _height(height), objects(), cars(), platforms() {
+    frog = std::make_shared<Frog>(frog_options);
     objects.push_back(frog);
 }
 
@@ -101,33 +136,7 @@ void GameEngine::start_gameloop(ssd1306_t *p){
         for(auto && obj : objects){
             obj->updateTick(now);
         }
-        // if(frog->y > 25){
-        //     if(frog->collidesWithObjects(cars)){
-        //         // game over
-        //         printf("game over - cars");
-        //         return;
-        //     }
-        // }
-        // else if(frog->y > 5){
-        //     std::shared_ptr<PhysicsObject> other = frog->collidesWithObjects(platforms);
-        //     if(other){
-        //         frog->setMotionVector(other->getMotionX(), other->getMotionY());
-        //     } else {
-        //         // game over
-        //         printf("game over - platforms");
-        //         return;
-        //     }
-        // } else {
-        //     if(frog->collidesWithObjects(leaves)){
-        //         // victory
-        //         printf("victory");
-        //         return;
-        //     } else {
-        //         // game over
-        //         printf("game over - leaves");
-        //         return;
-        //     }
-        // }
+        checkCollisions();
         ssd1306_clear(p);
         for(auto && obj : objects){
             printf("x:%d y:%d\n", obj->x, obj->y);
@@ -136,4 +145,35 @@ void GameEngine::start_gameloop(ssd1306_t *p){
         _last_time = now;
         ssd1306_show(p);
     }
+}
+
+bool GameEngine::checkCollisions(){
+    if(frog->y > 25){
+        if(frog->collidesWithObjects(cars)){
+            // game over
+            printf("game over - cars");
+            return false;
+        }
+    }
+    else if(frog->y > 5){
+        std::shared_ptr<PhysicsObject> other = frog->collidesWithObjects(platforms);
+        if(other){
+            frog->setMotionVector(other->getMotionX(), other->getMotionY());
+        } else {
+            // game over
+            printf("game over - platforms");
+            return false;
+        }
+    } else {
+        if(frog->collidesWithObjects(leaves)){
+            // victory
+            printf("victory");
+            return false;
+        } else {
+            // game over
+            printf("game over - leaves");
+            return false;
+        }
+    }
+    return true;
 }
