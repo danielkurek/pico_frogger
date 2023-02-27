@@ -110,6 +110,7 @@ void Frog::updateTick(absolute_time_t now){
     if(btn_right.isPressed(now)){
         if(x + _image.width <= 127 - _image.width) x += _image.width;
     }
+    PhysicsObject::updateTick(now);
 }
 
 GameEngine::GameEngine(int width, int height, frog_options_t& frog_options) : _width(width), _height(height), objects(), cars(), platforms() {
@@ -125,7 +126,7 @@ void GameEngine::start_gameloop(ssd1306_t *p){
         for(auto && obj : objects){
             obj->updateTick(now);
         }
-        checkCollisions();
+        bool game_over = checkCollisions();
         ssd1306_clear(p);
         for(auto && obj : objects){
             printf("x:%d y:%d\n", obj->x, obj->y);
@@ -133,6 +134,7 @@ void GameEngine::start_gameloop(ssd1306_t *p){
         }
         _last_time = now;
         ssd1306_show(p);
+        if(game_over) break;
     }
 }
 
@@ -141,28 +143,29 @@ bool GameEngine::checkCollisions(){
         if(frog->collidesWithObjects(cars)){
             // game over
             printf("game over - cars");
-            return false;
+            return true;
         }
     }
     else if(frog->y > 5){
         std::shared_ptr<PhysicsObject> other = frog->collidesWithObjects(platforms);
         if(other){
             frog->setMotionVector(other->getMotionX(), other->getMotionY());
+            frog->setStepTimeUs(75000);
         } else {
             // game over
             printf("game over - platforms");
-            return false;
+            return true;
         }
     } else {
         if(frog->collidesWithObjects(leaves)){
             // victory
             printf("victory");
-            return false;
+            return true;
         } else {
             // game over
             printf("game over - leaves");
-            return false;
+            return true;
         }
     }
-    return true;
+    return false;
 }

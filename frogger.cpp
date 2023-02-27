@@ -97,6 +97,14 @@ void animation(void) {
         1,1,1,1,1,1,1,1,1,1,1,1,1,1
     };
     Image truck_img = {14, 5, truck_img_data};
+    static uint8_t platform_img_data [] = {
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+        1,0,1,1,1,0,1,1,1,0,1,1,1,1,
+        1,1,0,0,0,1,0,0,0,1,0,0,0,1,
+        1,0,1,1,1,0,1,1,1,0,1,1,1,1,
+        1,1,1,1,1,1,1,1,1,1,1,1,1,1
+    };
+    Image platform_img = {14, 5, platform_img_data};
     ssd1306_clear(&disp);
     frog_options_t frog_options = {
         btn_up_pin: 0,
@@ -114,6 +122,13 @@ void animation(void) {
     truck->setStepTimeUs(75000);
     engine.cars.push_back(truck);
     engine.objects.push_back(truck);
+
+    std::shared_ptr<PhysicsObject> platform = std::make_shared<PhysicsObject>(127,25-1-platform_img.height,platform_img,true);
+    platform->setMotionVector(-1,0);
+    platform->setStepTimeUs(75000);
+    engine.platforms.push_back(platform);
+    engine.objects.push_back(platform);
+
     engine.start_gameloop(&disp);
 }
 
