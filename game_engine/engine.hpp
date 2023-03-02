@@ -14,11 +14,16 @@ struct Image{
     uint8_t* data;
 };
 
+struct MotionVector{
+    int x;
+    int y;
+};
+
 void ssd1306_image_blit(ssd1306_t *p, const Image& image, int x_offset, int y_offset);
 
 class GameObject{
     public:
-        GameObject(int _x, int _y, const Image image);
+        GameObject(int _x, int _y, const Image image, const char (&name)[5]);
         virtual void updateTick(absolute_time_t now) { }
         void draw(ssd1306_t *p);
         void changeImage(const Image image) { _image = image; }
@@ -28,24 +33,25 @@ class GameObject{
         int y;
     protected:
         Image _image;
+        char _name[5];
 };
 
 class PhysicsObject : public GameObject{
     public:
-        PhysicsObject(int x, int y, const Image image, bool loop);
+        PhysicsObject(int x, int y, const int max_x, const int max_y, const Image image, bool loop, const char (&name)[5]);
         virtual void updateTick(absolute_time_t now) override;
-        void setMotionVector(int _x_step, int _y_step);
-        void setStepTimeUs(int time_us);
         template<typename T>
         std::shared_ptr<T> collidesWithObjects(const std::vector<std::shared_ptr<T>>& collision_group);
-        int getMotionX() { return x_step; }
-        int getMotionY() { return y_step; }
-    private:
+        MotionVector motion_vector {0,0};
         int step_time_us = 1000;
-        int x_step = 0;
-        int y_step = 0;
+        absolute_time_t getLastUpdate() { return last_update; }
+        void synchronize(absolute_time_t other) { last_update = other; }
+    private:
         bool _loop;
         absolute_time_t last_update;
+    protected:
+        const int _max_x;
+        const int _max_y;
 };
 
 struct frog_options_t{
@@ -56,11 +62,14 @@ struct frog_options_t{
     uint btn_act_pin;
     uint btn_bck_pin;
     uint debounce_time_us;
+    int max_x;
+    int max_y;
 };
 
 class Frog : public PhysicsObject {
     public:
         Frog(frog_options_t config);
+        Frog(int x, int y, frog_options_t config);
         void updateTick(absolute_time_t now) override;
         static uint8_t frog_img_data [];
         static const Image frogImage;
@@ -78,8 +87,13 @@ class GameEngine{
         GameEngine(int width, int height, frog_options_t& frog_options);
         void start_gameloop(ssd1306_t *p);
 
+        void add_object(int x, int y, const Image image, const char (&name)[5]);
+        void add_car(int x, int y, const Image image, int step_time_us, MotionVector motion, const char (&name)[5]);
+        void add_platform(int x, int y, const Image image, int step_time_us, MotionVector motion, const char (&name)[5]);
+        void add_leaf(int x, int y, const Image image, const char (&name)[5]);
+
         std::vector<std::shared_ptr<GameObject>> objects;
-        std::vector<std::shared_ptr<GameObject>> cars;
+        std::vector<std::shared_ptr<PhysicsObject>> cars;
         std::vector<std::shared_ptr<PhysicsObject>> platforms;
         std::vector<std::shared_ptr<GameObject>> leaves;
     private:

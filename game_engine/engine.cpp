@@ -4,6 +4,7 @@
 #include <inttypes.h>
 #include <type_traits>
 #include "button.hpp"
+#include <cstring>
 
 void ssd1306_image_blit(ssd1306_t *p, const Image& image, int x_offset, int y_offset){
     for(int i = 0; i < image.width; ++i){
@@ -17,60 +18,62 @@ void ssd1306_image_blit(ssd1306_t *p, const Image& image, int x_offset, int y_of
     }
 }
 
-GameObject::GameObject(int _x, int _y, const Image image){
-    _image = image;
-    x = _x;
-    y = _y;
-    printf("gameobject constructor");
+GameObject::GameObject(int _x, int _y, const Image image, const char (&name)[5])
+    : _image(image), x(_x), y(_y)
+{
+    strncpy(_name, name, 5);
+#ifdef DEBUG_PRINT
+    printf("[%s] gameobject constructor", _name);
+#endif
 }
 
 void GameObject::draw(ssd1306_t *p){
-    printf("drawing\n");
+// #ifdef DEBUG_PRINT
+//     printf("[%s] drawing at x:%d y:%d\n", _name, x, y);
+// #endif
     ssd1306_image_blit(p, _image, x, y);
 }
 
-PhysicsObject::PhysicsObject(int x, int y, const Image image, bool loop) 
-    : GameObject(x, y, image), _loop(loop)
+PhysicsObject::PhysicsObject(int x, int y, const int max_x, const int max_y, const Image image, bool loop, const char (&name)[5]) 
+    : GameObject(x, y, image, name), _loop(loop), _max_x(max_x), _max_y(max_y)
 {
     last_update = get_absolute_time(); 
-    printf("PhysicsObject constructor");
+#ifdef DEBUG_PRINT
+    printf("[%s] PhysicsObject constructor", _name);
+#endif
 }
 
 void PhysicsObject::updateTick(absolute_time_t now){
     int64_t time_diff = absolute_time_diff_us(last_update, now);
     if(time_diff > step_time_us){
-        x += x_step * (time_diff / step_time_us);
-        y += y_step * (time_diff / step_time_us);
+        x += motion_vector.x * (time_diff / step_time_us);
+        y += motion_vector.y * (time_diff / step_time_us);
         if(_loop){
-            if(x > 127) x = x % 128;
-            else if(x < -_image.width) x = 127 - ((x+_image.width) % 128);
-            if(y > 63) y = y % 64;
-            else if(y < -_image.height) y = 63 - (y % 64);
+            if(x >= _max_x) x = x % _max_x;
+            else if(x < -_image.width) x = _max_x - ((x+_image.width) % _max_x) - 1;
+            if(y >= _max_y) y = y % _max_y;
+            else if(y < -_image.height) y = _max_y - (y % _max_y) - 1;
         }
         time_diff -= time_diff % step_time_us;
         last_update = now;
+#ifdef DEBUG_PRINT
+        printf("[%s] [%" PRId64 "] update position x:%d y:%d\n", _name, to_us_since_boot(now), x, y);
+#endif
     }
 }
 
-void PhysicsObject::setMotionVector(int _x_step, int _y_step){
-    x_step = _x_step;
-    y_step = _y_step;
-}
-void PhysicsObject::setStepTimeUs(int time_us){
-    step_time_us = time_us;
-}
 template<typename T>
 std::shared_ptr<T> PhysicsObject::collidesWithObjects(const std::vector<std::shared_ptr<T>>& collision_group){
     static_assert(std::is_base_of<GameObject, T>::value, "T must be derived from GameObject");
     int x1 = x;
-    int x2 = x + getWidth();
+    int x2 = x + getWidth() - 1;
     int y1 = y;
-    int y2 = y + getHeight();
+    int y2 = y + getHeight() - 1;
     for(auto && other : collision_group){
         int other_x1 = other->x;
-        int other_x2 = other->x + other->getWidth();
+        int other_x2 = other->x + other->getWidth() - 1;
         int other_y1 = other->y;
-        int other_y2 = other->y + other->getHeight();
+        int other_y2 = other->y + other->getHeight() - 1;
         if(x2 >= other_x1 && other_x2 >= x1 && y2 >= other_y1 && other_y2 >= y1){
             return other;
         }
@@ -88,7 +91,10 @@ uint8_t Frog::frog_img_data [] = {
 const Image Frog::frogImage = {5,5,Frog::frog_img_data};
 
 Frog::Frog(frog_options_t config) : 
-    PhysicsObject((127/2)-frogImage.width, 63-frogImage.height, frogImage, false),
+    Frog((config.max_x / 2) - frogImage.width / 2, config.max_y - frogImage.height, config) {}
+
+Frog::Frog(int x, int y, frog_options_t config) : 
+    PhysicsObject(x, y, config.max_x, config.max_y, frogImage, false, "frog"),
     btn_up(config.btn_up_pin, config.debounce_time_us),
     btn_down(config.btn_down_pin, config.debounce_time_us),
     btn_left(config.btn_left_pin, config.debounce_time_us),
@@ -99,16 +105,24 @@ Frog::Frog(frog_options_t config) :
 
 void Frog::updateTick(absolute_time_t now){
     if(btn_up.isPressed(now)){
-        if(y - _image.height >= 0) y -= _image.height;
+        // -------------------------------------
+        // allow clipping by 1 pixel on one side
+        // to make the height of the display
+        // divisible by 5
+        // -------------------------------------
+        if(y - _image.height >= -1) y -= _image.height;
     }
     if(btn_down.isPressed(now)){
-        if(y + _image.height <= 63 - _image.height) y += _image.height;
+        if(y + _image.height <= _max_y - _image.height) y += _image.height;
     }
     if(btn_left.isPressed(now)){
         if(x - _image.width >= 0) x -= _image.width;
     }
     if(btn_right.isPressed(now)){
-        if(x + _image.width <= 127 - _image.width) x += _image.width;
+        if(x + _image.width <= _max_x - _image.width) x += _image.width;
+    }
+    if(!(y >= 4 && y <= 28)){
+        motion_vector = {0,0};
     }
     PhysicsObject::updateTick(now);
 }
@@ -129,7 +143,6 @@ void GameEngine::start_gameloop(ssd1306_t *p){
         bool game_over = checkCollisions();
         ssd1306_clear(p);
         for(auto && obj : objects){
-            printf("x:%d y:%d\n", obj->x, obj->y);
             obj->draw(p);
         }
         _last_time = now;
@@ -139,33 +152,65 @@ void GameEngine::start_gameloop(ssd1306_t *p){
 }
 
 bool GameEngine::checkCollisions(){
-    if(frog->y > 25){
+    if(cars.size() > 0 && frog->y >= 34 && frog->y <= 58){
         if(frog->collidesWithObjects(cars)){
             // game over
-            printf("game over - cars");
+#ifdef DEBUG_PRINT
+            printf("game over - cars\n");
+#endif
             return true;
         }
     }
-    else if(frog->y > 5){
+    else if(platforms.size() > 0 && frog->y >= 4 && frog->y <= 28){
         std::shared_ptr<PhysicsObject> other = frog->collidesWithObjects(platforms);
         if(other){
-            frog->setMotionVector(other->getMotionX(), other->getMotionY());
-            frog->setStepTimeUs(75000);
+            frog->motion_vector = other->motion_vector;
+            frog->step_time_us = other->step_time_us;
+            frog->synchronize(other->getLastUpdate());
         } else {
             // game over
-            printf("game over - platforms");
+#ifdef DEBUG_PRINT
+            printf("game over - platforms\n");
+#endif
             return true;
         }
-    } else {
+    } else if(leaves.size() > 0 && frog->y <= 3){
         if(frog->collidesWithObjects(leaves)){
             // victory
-            printf("victory");
+#ifdef DEBUG_PRINT
+            printf("victory\n");
+#endif
             return true;
         } else {
             // game over
-            printf("game over - leaves");
+#ifdef DEBUG_PRINT
+            printf("game over - leaves\n");
+#endif
             return true;
         }
     }
     return false;
+}
+
+void GameEngine::add_object(int x, int y, const Image image, const char (&name)[5]){
+    objects.emplace_back(std::make_shared<GameObject>(x, y, image, name));
+}
+void GameEngine::add_car(int x, int y, const Image image, int step_time_us, MotionVector motion, const char (&name)[5]){
+    std::shared_ptr<PhysicsObject> car = std::make_shared<PhysicsObject>(x, y, _width, _height, image, true, name);
+    car->step_time_us = step_time_us;
+    car->motion_vector = motion;
+    objects.push_back(car);
+    cars.push_back(car);
+}
+void GameEngine::add_platform(int x, int y, const Image image, int step_time_us, MotionVector motion, const char (&name)[5]){
+    std::shared_ptr<PhysicsObject> platform = std::make_shared<PhysicsObject>(x, y, _width, _height, image, true, name);
+    platform->step_time_us = step_time_us;
+    platform->motion_vector = motion;
+    objects.push_back(platform);
+    platforms.push_back(platform);
+}
+void GameEngine::add_leaf(int x, int y, const Image image, const char (&name)[5]){
+    std::shared_ptr<GameObject> leaf = std::make_shared<GameObject>(x, y, image, name);
+    objects.push_back(leaf);
+    leaves.push_back(leaf);
 }
