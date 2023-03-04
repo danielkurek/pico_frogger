@@ -79,7 +79,6 @@ void setup_gpios(void) {
     gpio_put(SSD1306_SPI_RES, 0);
     gpio_set_dir(SSD1306_SPI_RES, GPIO_OUT);
 
-    //TODO: buttons init
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
 }

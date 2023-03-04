@@ -1,5 +1,15 @@
 #include "button.hpp"
 #include <pico/stdlib.h>
+
+Button::Button(uint pin, uint debounce_time_us) 
+    : _pin(pin), _debounce_time(debounce_time_us), 
+      _state(ButtonState::Released), _last_update(0) 
+{
+    gpio_init(_pin);
+    gpio_pull_down(_pin);
+    gpio_set_dir(_pin, false);
+}
+
 /**
  * Button needs to be `debounce_time` HIGH to return true
  * returns true only one time when the button is held

@@ -11,7 +11,7 @@ enum class ButtonState{
 };
 class Button{
     public:
-        Button(uint pin, uint debounce_time_us) : _pin(pin), _debounce_time(debounce_time_us), _state(ButtonState::Released), _last_update(0) {}
+        Button(uint pin, uint debounce_time_us);
         bool isPressed(absolute_time_t pressed); // should be called as frequently as possible
     private:
     uint _pin;
