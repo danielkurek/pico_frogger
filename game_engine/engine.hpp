@@ -11,6 +11,8 @@
 struct Image{
     uint8_t width;
     uint8_t height;
+    bool flip_horizontal;
+    bool flip_vertical;
     uint8_t* data;
 };
 
@@ -20,12 +22,13 @@ struct MotionVector{
 };
 
 void ssd1306_image_blit(ssd1306_t *p, const Image& image, int x_offset, int y_offset);
+void ssd1306_image_blit(ssd1306_t *p, const Image& image, int x_offset, int y_offset, bool loop);
 
 class GameObject{
     public:
         GameObject(int _x, int _y, const Image image, const char (&name)[5]);
         virtual void updateTick(absolute_time_t now) { }
-        void draw(ssd1306_t *p);
+        virtual void draw(ssd1306_t *p);
         void changeImage(const Image image) { _image = image; }
         int getWidth() { return _image.width; }
         int getHeight() { return _image.height; }
@@ -40,6 +43,7 @@ class PhysicsObject : public GameObject{
     public:
         PhysicsObject(int x, int y, const int max_x, const int max_y, const Image image, bool loop, const char (&name)[5]);
         virtual void updateTick(absolute_time_t now) override;
+        virtual void draw(ssd1306_t *p) override;
         template<typename T>
         std::shared_ptr<T> collidesWithObjects(const std::vector<std::shared_ptr<T>>& collision_group);
         MotionVector motion_vector {0,0};

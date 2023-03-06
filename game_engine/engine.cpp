@@ -7,12 +7,34 @@
 #include <cstring>
 
 void ssd1306_image_blit(ssd1306_t *p, const Image& image, int x_offset, int y_offset){
+    ssd1306_image_blit(p, image, x_offset, y_offset, false);
+}
+
+void ssd1306_image_blit(ssd1306_t *p, const Image& image, int x_offset, int y_offset, bool loop){
     for(int i = 0; i < image.width; ++i){
         for(int j = 0; j < image.height; ++j){
-            if(image.data[j*image.width + i]==1){
-                if(i+x_offset < 0) continue;
-                if(j+y_offset < 0) continue;
-                ssd1306_draw_pixel(p, i+x_offset, j+y_offset);
+            int img_i = i;
+            int img_j = j;
+            if(image.flip_horizontal){
+                img_i = (image.width - 1) - i;
+            }
+            if(image.flip_vertical){
+                img_j = (image.height - 1) - j;
+            }
+            if(image.data[img_j*image.width + img_i]==1){
+                int32_t x = (i+x_offset);
+                int32_t y = (j+y_offset);
+                if(loop){
+                    x = x % p->width;
+                    if(x < 0) x += p->width;
+                    y = y % p->height;
+                    if(y < 0) y += p->height;
+                } else{
+                    if(x < 0) continue;
+                    if(y < 0) continue;
+                }
+
+                ssd1306_draw_pixel(p, x, y);
             }
         }
     }
@@ -50,9 +72,9 @@ void PhysicsObject::updateTick(absolute_time_t now){
         y += motion_vector.y * (time_diff / step_time_us);
         if(_loop){
             if(x >= _max_x) x = x % _max_x;
-            else if(x < -_image.width) x = _max_x - ((x+_image.width) % _max_x) - 1;
+            else if(x < -_image.width) x = (x % _max_x) + _max_x;
             if(y >= _max_y) y = y % _max_y;
-            else if(y < -_image.height) y = _max_y - (y % _max_y) - 1;
+            else if(y < -_image.height) y = (y % _max_y) + _max_y;
         }
         time_diff -= time_diff % step_time_us;
         last_update = now;
@@ -60,6 +82,10 @@ void PhysicsObject::updateTick(absolute_time_t now){
         printf("[%s] [%" PRId64 "] update position x:%d y:%d\n", _name, to_us_since_boot(now), x, y);
 #endif
     }
+}
+
+void PhysicsObject::draw(ssd1306_t *p){
+    ssd1306_image_blit(p, _image, x, y, _loop);
 }
 
 template<typename T>
@@ -88,7 +114,7 @@ uint8_t Frog::frog_img_data [] = {
             1,1,1,1,1,
             0,1,1,1,0,
         };
-const Image Frog::frogImage = {5,5,Frog::frog_img_data};
+const Image Frog::frogImage = {5, 5, false, false, Frog::frog_img_data};
 
 Frog::Frog(frog_options_t config) : 
     Frog((config.max_x / 2) - frogImage.width / 2, config.max_y - frogImage.height, config) {}

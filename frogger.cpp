@@ -71,7 +71,7 @@ void game_start(void) {
         1,1,1,1,0,1,0,1,0,1,0,1,0,1,
         1,1,1,1,1,1,1,1,1,1,1,1,1,1
     };
-    Image truck_img = {14, 5, truck_img_data};
+    Image truck_img = {14, 5, false, false, truck_img_data};
     static uint8_t platform_img_data [] = {
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,
         0,1,1,1,1,1,1,1,1,1,1,1,1,0,
@@ -79,7 +79,7 @@ void game_start(void) {
         0,1,1,1,1,1,1,1,1,1,1,1,1,0,
         0,0,0,0,0,0,0,0,0,0,0,0,0,0
     };
-    Image platform_img = {14, 5, platform_img_data};
+    Image platform_img = {14, 5, false, false, platform_img_data};
     ssd1306_clear(&disp);
     frog_options_t frog_options = {
         btn_up_pin: 0,
