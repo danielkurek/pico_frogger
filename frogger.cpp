@@ -127,7 +127,7 @@ void game_start(void) {
         char name[5] = "plt0";
         name[3] = '0' + i;
         int height = SSD1306_HEIGHT - (cars_length + 2 + i) * Frog::frogImage.height - platform_img.height;
-        engine.add_car(SSD1306_WIDTH - platforms_offset[i], height, platform_img, 75000, motion, std::move(name));
+        engine.add_platform(SSD1306_WIDTH - platforms_offset[i], height, platform_img, 75000, motion, std::move(name));
     }
 
     for(int x = 0; x < SSD1306_WIDTH; x += SSD1306_WIDTH / 5){
