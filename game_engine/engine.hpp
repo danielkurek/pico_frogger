@@ -97,7 +97,7 @@ class GameEngine{
         std::vector<std::shared_ptr<PhysicsObject>> platforms;
         std::vector<std::shared_ptr<GameObject>> leaves;
     private:
-        bool checkCollisions();
+        bool checkCollisions(ssd1306_t *p);
         int _width;
         int _height;
         absolute_time_t _last_time;

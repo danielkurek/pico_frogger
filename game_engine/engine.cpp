@@ -140,21 +140,22 @@ void GameEngine::start_gameloop(ssd1306_t *p){
         for(auto && obj : objects){
             obj->updateTick(now);
         }
-        bool game_over = checkCollisions();
         ssd1306_clear(p);
         for(auto && obj : objects){
             obj->draw(p);
         }
         _last_time = now;
+        bool game_over = checkCollisions(p);
         ssd1306_show(p);
         if(game_over) break;
     }
 }
 
-bool GameEngine::checkCollisions(){
+bool GameEngine::checkCollisions(ssd1306_t *p){
     if(cars.size() > 0 && frog->y >= 34 && frog->y <= 58){
         if(frog->collidesWithObjects(cars)){
             // game over
+            ssd1306_draw_string(p, 5, 20, 2, "GAME OVER!");
 #ifdef DEBUG_PRINT
             printf("game over - cars\n");
 #endif
@@ -169,6 +170,7 @@ bool GameEngine::checkCollisions(){
             frog->synchronize(other->getLastUpdate());
         } else {
             // game over
+            ssd1306_draw_string(p, 5, 20, 2, "GAME OVER!");
 #ifdef DEBUG_PRINT
             printf("game over - platforms\n");
 #endif
@@ -176,6 +178,7 @@ bool GameEngine::checkCollisions(){
         }
     } else if(leaves.size() > 0 && frog->y <= 3){
         if(frog->collidesWithObjects(leaves)){
+            ssd1306_draw_string(p, 20, 20, 2, "VICTORY!");
             // victory
 #ifdef DEBUG_PRINT
             printf("victory\n");
@@ -183,6 +186,7 @@ bool GameEngine::checkCollisions(){
             return true;
         } else {
             // game over
+            ssd1306_draw_string(p, 5, 20, 2, "GAME OVER!");
 #ifdef DEBUG_PRINT
             printf("game over - leaves\n");
 #endif
