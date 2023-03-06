@@ -55,15 +55,7 @@ void draw_number(ssd1306_t *p, int x, int y, int number){
     }while(number > 0);
 }
 
-void game_start(void) {
-    ssd1306_t disp;
-    disp.external_vcc=false;
-    if(!ssd1306_init(&disp, SSD1306_WIDTH, SSD1306_HEIGHT, spi1, SSD1306_SPI_DC, SSD1306_SPI_CSN, SSD1306_SPI_RES)){
-        gpio_put(PICO_DEFAULT_LED_PIN, 0);
-        sleep_ms(50);
-        gpio_put(PICO_DEFAULT_LED_PIN, 1);
-        sleep_ms(50);
-    }
+void game_start(ssd1306_t *disp) {
     static uint8_t truck_img_data [] = {
         1,1,1,1,1,1,1,1,1,1,1,1,1,1,
         1,1,1,1,0,1,0,1,0,1,0,1,0,1,
@@ -88,7 +80,7 @@ void game_start(void) {
         1,1,1,1,1
     };
     Image leaf_img = {5, 4, false, false, leaf_img_data};
-    ssd1306_clear(&disp);
+    ssd1306_clear(disp);
     frog_options_t frog_options = {
         btn_up_pin: 0,
         btn_down_pin: 1,
@@ -138,7 +130,7 @@ void game_start(void) {
         engine.add_leaf(x, 0, leaf_img, "leaf");
     }
 
-    engine.start_gameloop(&disp);
+    engine.start_gameloop(disp);
 }
 
 
@@ -150,7 +142,25 @@ int main()
     sleep_ms(3000);
     printf("Boot up");
 #endif
-    game_start();
-
+    Button btn_start {5, 10000};
+    ssd1306_t disp;
+    disp.external_vcc=false;
+    if(!ssd1306_init(&disp, SSD1306_WIDTH, SSD1306_HEIGHT, spi1, SSD1306_SPI_DC, SSD1306_SPI_CSN, SSD1306_SPI_RES)){
+        while(true){
+            gpio_put(PICO_DEFAULT_LED_PIN, 0);
+            sleep_ms(50);
+            gpio_put(PICO_DEFAULT_LED_PIN, 1);
+            sleep_ms(50);
+        }
+    }
+    ssd1306_clear(&disp);
+    ssd1306_draw_string(&disp, 20, 15, 2, "FROGGER");
+    ssd1306_draw_string(&disp, 7, 35, 1, "Press ACT to start");
+    ssd1306_show(&disp);
+    while(true){
+        absolute_time_t now = get_absolute_time();
+        if(btn_start.isPressed(now))
+            game_start(&disp);
+    }
     return 0;
 }
