@@ -102,8 +102,6 @@ void game_start(void) {
     };
     GameEngine engine{SSD1306_WIDTH, SSD1306_HEIGHT, frog_options};
 #ifdef DEBUG_PRINT
-    printf("Boot up");
-    sleep_ms(5000);
     printf("Start");
 #endif
     int cars_offset[] = {1, 50, 100, 75, 25};
@@ -146,6 +144,10 @@ int main()
 {
     stdio_init_all();
     setup_gpios();
+#ifdef DEBUG_PRINT
+    sleep_ms(3000);
+    printf("Boot up");
+#endif
     game_start();
 
     return 0;
