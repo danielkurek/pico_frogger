@@ -108,8 +108,10 @@ void game_start(void) {
     size_t cars_length = sizeof(cars_offset) / sizeof(cars_offset[0]);
     for(int i = 0; i < cars_length; i++){
         MotionVector motion {-1, 0};
+        truck_img.flip_horizontal = false;
         if(i % 2 == 1){
             motion.x *= -1;
+            truck_img.flip_horizontal = !truck_img.flip_horizontal;
         }
         char name[5] = "car0";
         name[3] = '0' + i;
