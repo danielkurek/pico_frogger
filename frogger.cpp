@@ -106,6 +106,31 @@ void game_start(void) {
     sleep_ms(5000);
     printf("Start");
 #endif
+    int cars_offset[] = {1, 50, 100, 75, 25};
+    size_t cars_length = sizeof(cars_offset) / sizeof(cars_offset[0]);
+    for(int i = 0; i < cars_length; i++){
+        MotionVector motion {-1, 0};
+        if(i % 2 == 1){
+            motion.x *= -1;
+        }
+        char name[5] = "car0";
+        name[3] = '0' + i;
+        int height = SSD1306_HEIGHT - (i+1) * Frog::frogImage.height - truck_img.height;
+        engine.add_car(SSD1306_WIDTH - cars_offset[i], height, truck_img, 75000, motion, std::move(name));
+    }
+
+    int platforms_offset[] = {0, 30, 20, 75, 50};
+    size_t platforms_length = sizeof(platforms_offset) / sizeof(platforms_offset[0]);
+    for(int i = 0; i < platforms_length; i++){
+        MotionVector motion {-1, 0};
+        if(i % 2 == 1){
+            motion.x *= -1;
+        }
+        char name[5] = "plt0";
+        name[3] = '0' + i;
+        int height = SSD1306_HEIGHT - (cars_length + 2 + i) * Frog::frogImage.height - platform_img.height;
+        engine.add_car(SSD1306_WIDTH - platforms_offset[i], height, platform_img, 75000, motion, std::move(name));
+    }
 
     for(int x = 0; x < SSD1306_WIDTH; x += SSD1306_WIDTH / 5){
         char name[5] = "lef0";
