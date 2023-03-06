@@ -80,6 +80,14 @@ void game_start(void) {
         0,0,0,0,0,0,0,0,0,0,0,0,0,0
     };
     Image platform_img = {14, 5, false, false, platform_img_data};
+
+    static uint8_t leaf_img_data [] = {
+        1,1,1,1,1,
+        1,1,1,1,1,
+        1,1,1,1,1,
+        1,1,1,1,1
+    };
+    Image leaf_img = {5, 4, false, false, leaf_img_data};
     ssd1306_clear(&disp);
     frog_options_t frog_options = {
         btn_up_pin: 0,
@@ -98,8 +106,12 @@ void game_start(void) {
     sleep_ms(5000);
     printf("Start");
 #endif
-    engine.add_car(SSD1306_WIDTH - 1, SSD1306_HEIGHT - Frog::frogImage.height - truck_img.height, truck_img, 75000, {-1, 0}, "car1");
-    engine.add_platform(SSD1306_WIDTH,28-platform_img.height+1,platform_img, 75000, {-1, 0}, "plt1");
+
+    for(int x = 0; x < SSD1306_WIDTH; x += SSD1306_WIDTH / 5){
+        char name[5] = "lef0";
+        name[3] = '0' + x;
+        engine.add_leaf(x, 0, leaf_img, "leaf");
+    }
 
     engine.start_gameloop(&disp);
 }
