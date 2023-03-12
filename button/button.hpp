@@ -14,10 +14,10 @@ class Button{
         Button(uint pin, uint debounce_time_us);
         bool isPressed(absolute_time_t pressed); // should be called as frequently as possible
     private:
-    uint _pin;
-    uint _debounce_time;
-    ButtonState _state;
-    absolute_time_t _last_update;
+        uint pin_;
+        uint debounce_time_;
+        ButtonState state_;
+        absolute_time_t last_update_;
 };
 
 #endif

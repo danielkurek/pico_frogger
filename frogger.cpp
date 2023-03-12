@@ -1,15 +1,6 @@
 #include <stdio.h>
 #include "pico/stdlib.h"
-// #include "hardware/uart.h"
-// #include "hardware/gpio.h"
-// #include "hardware/divider.h"
-// #include "hardware/spi.h"
 #include "hardware/spi.h"
-// #include "hardware/pio.h"
-// #include "hardware/interp.h"
-// #include "hardware/timer.h"
-// #include "hardware/watchdog.h"
-// #include "hardware/clocks.h"
 
 #include "pico_ssd1306/ssd1306-spi.h"
 #include "game_engine/engine.hpp"
@@ -32,15 +23,13 @@ void setup_gpios(void) {
     spi_set_format(spi1, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
     gpio_set_function(SSD1306_SPI_SCK, GPIO_FUNC_SPI);
     gpio_set_function(SSD1306_SPI_TX, GPIO_FUNC_SPI);
-    gpio_init(SSD1306_SPI_CSN);
-    gpio_put(SSD1306_SPI_CSN, 0);
-    gpio_set_dir(SSD1306_SPI_CSN, GPIO_OUT);
-    gpio_init(SSD1306_SPI_DC);
-    gpio_put(SSD1306_SPI_DC, 0);
-    gpio_set_dir(SSD1306_SPI_DC, GPIO_OUT);
-    gpio_init(SSD1306_SPI_RES);
-    gpio_put(SSD1306_SPI_RES, 0);
-    gpio_set_dir(SSD1306_SPI_RES, GPIO_OUT);
+    const uint32_t additional_spi_pins_mask = 1 << SSD1306_SPI_CSN || 1 << SSD1306_SPI_DC || 1 << SSD1306_SPI_RES;
+    gpio_init_mask(additional_spi_pins_mask);
+    // gpio_pull_up(SSD1306_SPI_CSN);
+    // gpio_pull_up(SSD1306_SPI_DC);
+    // gpio_pull_up(SSD1306_SPI_RES);
+    gpio_set_dir_out_masked(additional_spi_pins_mask);
+    gpio_put_masked(additional_spi_pins_mask, 0);
 
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
@@ -108,7 +97,7 @@ void game_start(ssd1306_t *disp) {
         char name[5] = "car0";
         name[3] = '0' + i;
         int height = SSD1306_HEIGHT - (i+1) * Frog::frogImage.height - truck_img.height;
-        engine.add_car(SSD1306_WIDTH - cars_offset[i], height, truck_img, 75000, motion, std::move(name));
+        engine.addCar(SSD1306_WIDTH - cars_offset[i], height, truck_img, 75000, motion, std::move(name));
     }
 
     int platforms_offset[] = {0, 30, 20, 75, 50};
@@ -121,16 +110,16 @@ void game_start(ssd1306_t *disp) {
         char name[5] = "plt0";
         name[3] = '0' + i;
         int height = SSD1306_HEIGHT - (cars_length + 2 + i) * Frog::frogImage.height - platform_img.height;
-        engine.add_platform(SSD1306_WIDTH - platforms_offset[i], height, platform_img, 75000, motion, std::move(name));
+        engine.addPlatform(SSD1306_WIDTH - platforms_offset[i], height, platform_img, 75000, motion, std::move(name));
     }
 
     for(int x = 0; x < SSD1306_WIDTH; x += SSD1306_WIDTH / 5){
         char name[5] = "lef0";
         name[3] = '0' + x;
-        engine.add_leaf(x, 0, leaf_img, "leaf");
+        engine.addLeaf(x, 0, leaf_img, "leaf");
     }
 
-    engine.start_gameloop(disp);
+    engine.startGameLoop(disp);
 }
 
 

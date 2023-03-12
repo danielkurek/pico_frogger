@@ -6,7 +6,7 @@
 #include "button.hpp"
 #include <cstring>
 
-void ssd1306_image_blit(ssd1306_t *p, const Image& image, int x_offset, int y_offset){
+inline void ssd1306_image_blit(ssd1306_t *p, const Image& image, int x_offset, int y_offset){
     ssd1306_image_blit(p, image, x_offset, y_offset, false);
 }
 
@@ -41,51 +41,51 @@ void ssd1306_image_blit(ssd1306_t *p, const Image& image, int x_offset, int y_of
 }
 
 GameObject::GameObject(int _x, int _y, const Image image, const char (&name)[5])
-    : _image(image), x(_x), y(_y)
+    : image_(image), x(_x), y(_y)
 {
-    strncpy(_name, name, 5);
+    strncpy(name_, name, 5);
 #ifdef DEBUG_PRINT
-    printf("[%s] gameobject constructor", _name);
+    printf("[%s] gameobject constructor", name_);
 #endif
 }
 
 void GameObject::draw(ssd1306_t *p){
 // #ifdef DEBUG_PRINT
-//     printf("[%s] drawing at x:%d y:%d\n", _name, x, y);
+//     printf("[%s] drawing at x:%d y:%d\n", name_, x, y);
 // #endif
-    ssd1306_image_blit(p, _image, x, y);
+    ssd1306_image_blit(p, image_, x, y);
 }
 
 PhysicsObject::PhysicsObject(int x, int y, const int max_x, const int max_y, const Image image, bool loop, const char (&name)[5]) 
-    : GameObject(x, y, image, name), _loop(loop), _max_x(max_x), _max_y(max_y)
+    : GameObject(x, y, image, name), loop_(loop), max_x_(max_x), max_y_(max_y)
 {
-    last_update = get_absolute_time(); 
+    last_update_ = get_absolute_time(); 
 #ifdef DEBUG_PRINT
-    printf("[%s] PhysicsObject constructor", _name);
+    printf("[%s] PhysicsObject constructor", name_);
 #endif
 }
 
 void PhysicsObject::updateTick(absolute_time_t now){
-    int64_t time_diff = absolute_time_diff_us(last_update, now);
+    int64_t time_diff = absolute_time_diff_us(last_update_, now);
     if(time_diff > step_time_us){
         x += motion_vector.x * (time_diff / step_time_us);
         y += motion_vector.y * (time_diff / step_time_us);
-        if(_loop){
-            if(x >= _max_x) x = x % _max_x;
-            else if(x < -_image.width) x = (x % _max_x) + _max_x;
-            if(y >= _max_y) y = y % _max_y;
-            else if(y < -_image.height) y = (y % _max_y) + _max_y;
+        if(loop_){
+            if(x >= max_x_) x = x % max_x_;
+            else if(x < -image_.width) x = (x % max_x_) + max_x_;
+            if(y >= max_y_) y = y % max_y_;
+            else if(y < -image_.height) y = (y % max_y_) + max_y_;
         }
         time_diff -= time_diff % step_time_us;
-        last_update = now;
+        last_update_ = now;
 #ifdef DEBUG_PRINT
-        printf("[%s] [%" PRId64 "] update position x:%d y:%d\n", _name, to_us_since_boot(now), x, y);
+        printf("[%s] [%" PRId64 "] update position x:%d y:%d\n", name_, to_us_since_boot(now), x, y);
 #endif
     }
 }
 
 void PhysicsObject::draw(ssd1306_t *p){
-    ssd1306_image_blit(p, _image, x, y, _loop);
+    ssd1306_image_blit(p, image_, x, y, loop_);
 }
 
 template<typename T>
@@ -121,31 +121,31 @@ Frog::Frog(frog_options_t config) :
 
 Frog::Frog(int x, int y, frog_options_t config) : 
     PhysicsObject(x, y, config.max_x, config.max_y, frogImage, false, "frog"),
-    btn_up(config.btn_up_pin, config.debounce_time_us),
-    btn_down(config.btn_down_pin, config.debounce_time_us),
-    btn_left(config.btn_left_pin, config.debounce_time_us),
-    btn_right(config.btn_right_pin, config.debounce_time_us),
-    btn_act(config.btn_act_pin, config.debounce_time_us),
-    btn_bck(config.btn_bck_pin, config.debounce_time_us)
+    btn_up_(config.btn_up_pin, config.debounce_time_us),
+    btn_down_(config.btn_down_pin, config.debounce_time_us),
+    btn_left_(config.btn_left_pin, config.debounce_time_us),
+    btn_right_(config.btn_right_pin, config.debounce_time_us),
+    btn_act_(config.btn_act_pin, config.debounce_time_us),
+    btn_bck_(config.btn_bck_pin, config.debounce_time_us)
  {}
 
 void Frog::updateTick(absolute_time_t now){
-    if(btn_up.isPressed(now)){
+    if(btn_up_.isPressed(now)){
         // -------------------------------------
         // allow clipping by 1 pixel on one side
         // to make the height of the display
         // divisible by 5
         // -------------------------------------
-        if(y - _image.height >= -1) y -= _image.height;
+        if(y - image_.height >= -1) y -= image_.height;
     }
-    if(btn_down.isPressed(now)){
-        if(y + _image.height <= _max_y - _image.height) y += _image.height;
+    if(btn_down_.isPressed(now)){
+        if(y + image_.height <= max_y_ - image_.height) y += image_.height;
     }
-    if(btn_left.isPressed(now)){
-        if(x - _image.width >= 0) x -= _image.width;
+    if(btn_left_.isPressed(now)){
+        if(x - image_.width >= 0) x -= image_.width;
     }
-    if(btn_right.isPressed(now)){
-        if(x + _image.width <= _max_x - _image.width) x += _image.width;
+    if(btn_right_.isPressed(now)){
+        if(x + image_.width <= max_x_ - image_.width) x += image_.width;
     }
     if(!(y >= 4 && y <= 28)){
         motion_vector = {0,0};
@@ -153,14 +153,14 @@ void Frog::updateTick(absolute_time_t now){
     PhysicsObject::updateTick(now);
 }
 
-GameEngine::GameEngine(int width, int height, frog_options_t& frog_options) : _width(width), _height(height), objects(), cars(), platforms() {
+GameEngine::GameEngine(int width, int height, frog_options_t& frog_options) : width_(width), height_(height), objects(), cars(), platforms() {
     frog = std::make_shared<Frog>(frog_options);
     objects.push_back(frog);
 }
 
 
-void GameEngine::start_gameloop(ssd1306_t *p){
-    _last_time = get_absolute_time();
+void GameEngine::startGameLoop(ssd1306_t *p){
+    last_time_ = get_absolute_time();
     for(;;){
         absolute_time_t now = get_absolute_time();
         for(auto && obj : objects){
@@ -170,7 +170,7 @@ void GameEngine::start_gameloop(ssd1306_t *p){
         for(auto && obj : objects){
             obj->draw(p);
         }
-        _last_time = now;
+        last_time_ = now;
         bool game_over = checkCollisions(p);
         ssd1306_show(p);
         if(game_over) break;
@@ -222,24 +222,24 @@ bool GameEngine::checkCollisions(ssd1306_t *p){
     return false;
 }
 
-void GameEngine::add_object(int x, int y, const Image image, const char (&name)[5]){
+void GameEngine::addObject(int x, int y, const Image image, const char (&name)[5]){
     objects.emplace_back(std::make_shared<GameObject>(x, y, image, name));
 }
-void GameEngine::add_car(int x, int y, const Image image, int step_time_us, MotionVector motion, const char (&name)[5]){
-    std::shared_ptr<PhysicsObject> car = std::make_shared<PhysicsObject>(x, y, _width, _height, image, true, name);
+void GameEngine::addCar(int x, int y, const Image image, int step_time_us, MotionVector motion, const char (&name)[5]){
+    std::shared_ptr<PhysicsObject> car = std::make_shared<PhysicsObject>(x, y, width_, height_, image, true, name);
     car->step_time_us = step_time_us;
     car->motion_vector = motion;
     objects.push_back(car);
     cars.push_back(car);
 }
-void GameEngine::add_platform(int x, int y, const Image image, int step_time_us, MotionVector motion, const char (&name)[5]){
-    std::shared_ptr<PhysicsObject> platform = std::make_shared<PhysicsObject>(x, y, _width, _height, image, true, name);
+void GameEngine::addPlatform(int x, int y, const Image image, int step_time_us, MotionVector motion, const char (&name)[5]){
+    std::shared_ptr<PhysicsObject> platform = std::make_shared<PhysicsObject>(x, y, width_, height_, image, true, name);
     platform->step_time_us = step_time_us;
     platform->motion_vector = motion;
     objects.push_back(platform);
     platforms.push_back(platform);
 }
-void GameEngine::add_leaf(int x, int y, const Image image, const char (&name)[5]){
+void GameEngine::addLeaf(int x, int y, const Image image, const char (&name)[5]){
     std::shared_ptr<GameObject> leaf = std::make_shared<GameObject>(x, y, image, name);
     objects.push_back(leaf);
     leaves.push_back(leaf);

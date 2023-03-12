@@ -21,7 +21,7 @@ struct MotionVector{
     int y;
 };
 
-void ssd1306_image_blit(ssd1306_t *p, const Image& image, int x_offset, int y_offset);
+inline void ssd1306_image_blit(ssd1306_t *p, const Image& image, int x_offset, int y_offset);
 void ssd1306_image_blit(ssd1306_t *p, const Image& image, int x_offset, int y_offset, bool loop);
 
 class GameObject{
@@ -29,14 +29,14 @@ class GameObject{
         GameObject(int _x, int _y, const Image image, const char (&name)[5]);
         virtual void updateTick(absolute_time_t now) { }
         virtual void draw(ssd1306_t *p);
-        void changeImage(const Image image) { _image = image; }
-        int getWidth() { return _image.width; }
-        int getHeight() { return _image.height; }
+        void changeImage(const Image image) { image_ = image; }
+        int getWidth() { return image_.width; }
+        int getHeight() { return image_.height; }
         int x;
         int y;
     protected:
-        Image _image;
-        char _name[5];
+        Image image_;
+        char name_[5];
 };
 
 class PhysicsObject : public GameObject{
@@ -48,14 +48,14 @@ class PhysicsObject : public GameObject{
         std::shared_ptr<T> collidesWithObjects(const std::vector<std::shared_ptr<T>>& collision_group);
         MotionVector motion_vector {0,0};
         int step_time_us = 1000;
-        absolute_time_t getLastUpdate() { return last_update; }
-        void synchronize(absolute_time_t other) { last_update = other; }
+        absolute_time_t getLastUpdate() { return last_update_; }
+        void synchronize(absolute_time_t other) { last_update_ = other; }
     private:
-        bool _loop;
-        absolute_time_t last_update;
+        bool loop_;
+        absolute_time_t last_update_;
     protected:
-        const int _max_x;
-        const int _max_y;
+        const int max_x_;
+        const int max_y_;
 };
 
 struct frog_options_t{
@@ -78,23 +78,23 @@ class Frog : public PhysicsObject {
         static uint8_t frog_img_data [];
         static const Image frogImage;
     private:
-        Button btn_up;
-        Button btn_down;
-        Button btn_left;
-        Button btn_right;
-        Button btn_act;
-        Button btn_bck;
+        Button btn_up_;
+        Button btn_down_;
+        Button btn_left_;
+        Button btn_right_;
+        Button btn_act_;
+        Button btn_bck_;
 };
 
 class GameEngine{
     public:
         GameEngine(int width, int height, frog_options_t& frog_options);
-        void start_gameloop(ssd1306_t *p);
+        void startGameLoop(ssd1306_t *p);
 
-        void add_object(int x, int y, const Image image, const char (&name)[5]);
-        void add_car(int x, int y, const Image image, int step_time_us, MotionVector motion, const char (&name)[5]);
-        void add_platform(int x, int y, const Image image, int step_time_us, MotionVector motion, const char (&name)[5]);
-        void add_leaf(int x, int y, const Image image, const char (&name)[5]);
+        void addObject(int x, int y, const Image image, const char (&name)[5]);
+        void addCar(int x, int y, const Image image, int step_time_us, MotionVector motion, const char (&name)[5]);
+        void addPlatform(int x, int y, const Image image, int step_time_us, MotionVector motion, const char (&name)[5]);
+        void addLeaf(int x, int y, const Image image, const char (&name)[5]);
 
         std::vector<std::shared_ptr<GameObject>> objects;
         std::vector<std::shared_ptr<PhysicsObject>> cars;
@@ -102,9 +102,9 @@ class GameEngine{
         std::vector<std::shared_ptr<GameObject>> leaves;
     private:
         bool checkCollisions(ssd1306_t *p);
-        int _width;
-        int _height;
-        absolute_time_t _last_time;
+        int width_;
+        int height_;
+        absolute_time_t last_time_;
         std::shared_ptr<Frog> frog;
 };
 
