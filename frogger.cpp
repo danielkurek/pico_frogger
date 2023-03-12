@@ -63,12 +63,12 @@ void game_start(ssd1306_t *disp) {
     Image platform_img = {14, 5, false, false, platform_img_data};
 
     static uint8_t leaf_img_data [] = {
-        1,1,1,1,1,
-        1,1,1,1,1,
-        1,1,1,1,1,
-        1,1,1,1,1
+        1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,
+        1,1,1,1,1,1,1,
+        1,0,1,0,1,0,1
     };
-    Image leaf_img = {5, 4, false, false, leaf_img_data};
+    Image leaf_img = {7, 4, false, false, leaf_img_data};
     ssd1306_clear(disp);
     frog_options_t frog_options = {
         btn_up_pin: 0,
@@ -113,7 +113,7 @@ void game_start(ssd1306_t *disp) {
         engine.addPlatform(SSD1306_WIDTH - platforms_offset[i], height, platform_img, 75000, motion, std::move(name));
     }
 
-    for(int x = 0; x < SSD1306_WIDTH; x += SSD1306_WIDTH / 5){
+    for(int x = 0; x < SSD1306_WIDTH; x += SSD1306_WIDTH / 7){
         char name[5] = "lef0";
         name[3] = '0' + x;
         engine.addLeaf(x, 0, leaf_img, "leaf");

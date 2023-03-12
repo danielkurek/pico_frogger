@@ -203,7 +203,7 @@ bool GameEngine::checkCollisions(ssd1306_t *p){
             return true;
         }
     } else if(leaves.size() > 0 && frog->y <= 3){
-        if(frog->collidesWithObjects(leaves)){
+        if(!frog->collidesWithObjects(leaves)){
             ssd1306_draw_string(p, 20, 20, 2, "VICTORY!");
             // victory
 #ifdef DEBUG_PRINT
