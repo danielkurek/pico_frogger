@@ -23,7 +23,7 @@ void setup_gpios(void) {
     spi_set_format(spi1, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
     gpio_set_function(SSD1306_SPI_SCK, GPIO_FUNC_SPI);
     gpio_set_function(SSD1306_SPI_TX, GPIO_FUNC_SPI);
-    const uint additional_spi_pins_mask = 1 << SSD1306_SPI_CSN | 1 << SSD1306_SPI_DC | 1 << SSD1306_SPI_RES;
+    constexpr uint additional_spi_pins_mask = 1 << SSD1306_SPI_CSN | 1 << SSD1306_SPI_DC | 1 << SSD1306_SPI_RES;
     gpio_init_mask(additional_spi_pins_mask);
     // gpio_pull_up(SSD1306_SPI_CSN);
     // gpio_pull_up(SSD1306_SPI_DC);
