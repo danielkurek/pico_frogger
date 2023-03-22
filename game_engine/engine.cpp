@@ -10,6 +10,8 @@ inline void ssd1306_image_blit(ssd1306_t *p, const Image& image, int x_offset, i
     ssd1306_image_blit(p, image, x_offset, y_offset, false);
 }
 
+
+// loop = wrap around the image if it is outside of the display
 void ssd1306_image_blit(ssd1306_t *p, const Image& image, int x_offset, int y_offset, bool loop){
     for(int i = 0; i < image.width; ++i){
         for(int j = 0; j < image.height; ++j){

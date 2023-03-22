@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 # Initialise pico_sdk from installed location
 # (note this can come from environment, CMake cache etc)
-set(PICO_SDK_PATH "/home/dk/CUNI/5-semestr/Programovani Microcontroleru/pico/pico-sdk")
+# set(PICO_SDK_PATH "path_to_pico-sdk")
 
 set(PICO_BOARD pico CACHE STRING "Board type")
 
@@ -18,6 +18,7 @@ if (PICO_SDK_VERSION_STRING VERSION_LESS "1.4.0")
 message(FATAL_ERROR "Raspberry Pi Pico SDK version 1.4.0 (or later) required. Your version is ${PICO_SDK_VERSION_STRING}")
 endif()
 
+# remove if you do not want debug print over serial
 add_compile_definitions(DEBUG_PRINT)
 
 project(frogger C CXX ASM)

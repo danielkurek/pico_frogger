@@ -11,26 +11,40 @@
 
 #define SSD1306_SPI_RES 7
 #define SSD1306_SPI_DC 8
-#define SSD1306_SPI_CSN 9
+#define SSD1306_SPI_CS 9
 #define SSD1306_SPI_SCK 10
 #define SSD1306_SPI_TX 11
 
 #define SSD1306_WIDTH 128
 #define SSD1306_HEIGHT 64
 
+#define BTN_UP 0
+#define BTN_DOWN 1
+#define BTN_LEFT 2
+#define BTN_RIGHT 3
+#define BTN_ACTION 5
+#define BTN_BACK 4
+
+#define DEBOUCE_TIME_US 10000 // in microseconds
+
+// initialize all gpio pins
 void setup_gpios(void) {
+    // spi init
     spi_init(spi1, 10 * 1024 * 1024);
     spi_set_format(spi1, 8, SPI_CPOL_0, SPI_CPHA_0, SPI_MSB_FIRST);
     gpio_set_function(SSD1306_SPI_SCK, GPIO_FUNC_SPI);
     gpio_set_function(SSD1306_SPI_TX, GPIO_FUNC_SPI);
-    constexpr uint additional_spi_pins_mask = 1 << SSD1306_SPI_CSN | 1 << SSD1306_SPI_DC | 1 << SSD1306_SPI_RES;
+
+    // additional spi pins
+    constexpr uint additional_spi_pins_mask = 1 << SSD1306_SPI_CS | 1 << SSD1306_SPI_DC | 1 << SSD1306_SPI_RES;
     gpio_init_mask(additional_spi_pins_mask);
-    // gpio_pull_up(SSD1306_SPI_CSN);
+    // gpio_pull_up(SSD1306_SPI_CS);
     // gpio_pull_up(SSD1306_SPI_DC);
     // gpio_pull_up(SSD1306_SPI_RES);
     gpio_set_dir_out_masked(additional_spi_pins_mask);
     gpio_put_masked(additional_spi_pins_mask, 0);
 
+    // internal led init
     gpio_init(PICO_DEFAULT_LED_PIN);
     gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
 }
@@ -45,6 +59,7 @@ void draw_number(ssd1306_t *p, int x, int y, int number){
 }
 
 void game_start(ssd1306_t *disp) {
+    // image init
     static uint8_t truck_img_data [] = {
         1,1,1,1,1,1,1,1,1,1,1,1,1,1,
         1,1,1,1,0,1,0,1,0,1,0,1,0,1,
@@ -69,15 +84,17 @@ void game_start(ssd1306_t *disp) {
         1,0,1,0,1,0,1
     };
     Image leaf_img = {7, 4, false, false, leaf_img_data};
+
+
     ssd1306_clear(disp);
     frog_options_t frog_options = {
-        btn_up_pin: 0,
-        btn_down_pin: 1,
-        btn_left_pin: 2,
-        btn_right_pin: 3,
-        btn_act_pin: 5,
-        btn_bck_pin: 4,
-        debounce_time_us: 10000,
+        btn_up_pin: BTN_UP,
+        btn_down_pin: BTN_DOWN,
+        btn_left_pin: BTN_LEFT,
+        btn_right_pin: BTN_RIGHT,
+        btn_act_pin: BTN_ACTION,
+        btn_bck_pin: BTN_BACK,
+        debounce_time_us: DEBOUCE_TIME_US,
         max_x: SSD1306_WIDTH,
         max_y: SSD1306_HEIGHT
     };
@@ -85,6 +102,8 @@ void game_start(ssd1306_t *disp) {
 #ifdef DEBUG_PRINT
     printf("Start");
 #endif
+
+    // add objects to game engine
     int cars_offset[] = {1, 50, 100, 75, 25};
     size_t cars_length = sizeof(cars_offset) / sizeof(cars_offset[0]);
     for(int i = 0; i < cars_length; i++){
@@ -127,14 +146,18 @@ int main()
 {
     stdio_init_all();
     setup_gpios();
+
 #ifdef DEBUG_PRINT
     sleep_ms(3000);
     printf("Boot up");
 #endif
-    Button btn_start {5, 10000};
+    
+    Button btn_start {BTN_ACTION, DEBOUCE_TIME_US};
+
     ssd1306_t disp;
     disp.external_vcc=false;
-    if(!ssd1306_init(&disp, SSD1306_WIDTH, SSD1306_HEIGHT, spi1, SSD1306_SPI_DC, SSD1306_SPI_CSN, SSD1306_SPI_RES)){
+    if(!ssd1306_init(&disp, SSD1306_WIDTH, SSD1306_HEIGHT, spi1, SSD1306_SPI_DC, SSD1306_SPI_CS, SSD1306_SPI_RES)){
+        // failed to init display
         while(true){
             gpio_put(PICO_DEFAULT_LED_PIN, 0);
             sleep_ms(50);
@@ -143,9 +166,12 @@ int main()
         }
     }
     ssd1306_clear(&disp);
+
     ssd1306_draw_string(&disp, 20, 15, 2, "FROGGER");
     ssd1306_draw_string(&disp, 7, 35, 1, "Press ACT to start");
     ssd1306_show(&disp);
+
+    // loop for restarting game
     while(true){
         absolute_time_t now = get_absolute_time();
         if(btn_start.isPressed(now))
