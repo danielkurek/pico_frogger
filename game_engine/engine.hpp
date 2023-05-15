@@ -72,6 +72,7 @@ class PhysicsObject : public GameObject{
         bool loop_;
         absolute_time_t last_update_;
     protected:
+        // edges of screen
         const int max_x_;
         const int max_y_;
 };
