@@ -1,0 +1,3 @@
+ - turtles - with timer to disapear (animation)
+ - "invert" leaves - frog should go in compartments between leaves
+ - more frogs - fill all compartments to win
